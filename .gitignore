@@ -1,0 +1,11 @@
+node_modules/
+.openai/
+.env
+.env.*
+!.env.example
+*.pdfboard
+*.pdf
+*.log
+.DS_Store
+Thumbs.db
+__pycache__/

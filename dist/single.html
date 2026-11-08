@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="在浏览器本地预览、重排和导出 PDF 页面。">
+  <title>页序 · PDF 页面编辑器</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><span class="logo" aria-hidden="true">▤</span><div><strong>页序</strong><small>PDF 页面编辑器</small></div></div>
+    <div class="file-info"><strong id="filename">未打开文件</strong><small id="page-info"></small></div>
+    <div class="actions">
+      <button id="open">打开文件</button>
+      <button id="undo" disabled>撤销</button>
+      <button id="redo" disabled>重做</button>
+      <button id="export" class="primary" disabled>导出 PDF</button>
+    </div>
+  </header>
+  <input id="file" type="file" accept=".pdf,application/pdf" hidden>
+  <div id="message" role="status" hidden></div>
+  <main id="empty">
+    <section id="drop">
+      <div class="emblem" aria-hidden="true">▤</div>
+      <p class="eyebrow">PDF WORKSPACE</p>
+      <h1>整理 PDF 页面</h1>
+      <p>拖入 PDF 文件，预览页面并调整顺序。</p>
+      <button id="choose" class="primary">选择 PDF</button>
+      <small>文件仅在当前浏览器处理</small>
+    </section>
+  </main>
+  <main id="editor" hidden>
+    <aside>
+      <div class="sidebar-title"><strong>页面</strong><small>拖动缩略图调整顺序</small></div>
+      <div id="thumbs" aria-label="页面缩略图"></div>
+      <form id="move">
+        <label for="target">将选中页移到</label>
+        <div><input id="target" type="number" min="1" step="1" required aria-label="目标页码"><button>移动</button></div>
+      </form>
+    </aside>
+    <section class="preview">
+      <div class="preview-tools">
+        <div><button id="prev" aria-label="上一页">←</button><span id="position"></span><button id="next" aria-label="下一页">→</button></div>
+        <div><button id="out" aria-label="缩小">−</button><span id="zoom">100%</span><button id="in" aria-label="放大">＋</button><button id="fit" aria-pressed="false">适应宽度</button></div>
+      </div>
+      <div id="viewport" aria-busy="false"><div id="paper"></div></div>
+    </section>
+  </main>
+  <script type="module" src="./editor.js"></script>
+</body>
+</html>

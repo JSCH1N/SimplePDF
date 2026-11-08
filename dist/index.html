@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="在本地画布编排、合并和导出多份 PDF。">
+  <title>Simple PDF</title>
+  <link rel="stylesheet" href="./board.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><div><strong>Simple PDF</strong><small>PDF 编排画布</small></div></div>
+    <div class="project-status"><button id="project-name" title="编辑工程名称">未命名工程</button><small id="save-state">尚未保存</small></div>
+    <nav aria-label="工程操作">
+      <div id="settings-control"><button id="settings-toggle" aria-expanded="false" aria-controls="settings-menu">设置</button>
+        <div id="settings-menu" hidden><button id="image-settings">图片转页</button><button id="project-settings">自动保存</button><button id="language-settings">语言</button></div>
+      </div>
+      <button id="open-project">打开工程</button>
+      <button id="save-project">保存工程</button>
+      <button id="exit">保存并退出</button>
+      <button id="export-all" class="primary">导出全部</button>
+    </nav>
+  </header>
+  <input type="file" id="pdf-input" accept=".pdf,.png,.jpg,.jpeg,.ai,.fig" multiple hidden>
+  <input type="file" id="project-input" accept=".pdfboard" hidden>
+  <main id="workspace">
+    <aside class="inbox">
+      <div class="panel-heading"><h1>素材库</h1></div>
+      <button id="import" class="primary">导入</button>
+      <button id="new-folder">添加文件夹</button>
+      <div id="inbox-list" aria-label="素材库"></div>
+      <small class="local">PDF 与工程均在本机处理</small>
+    </aside>
+    <div class="panel-divider" id="left-divider" role="separator" aria-label="调整素材栏宽度" aria-orientation="vertical" tabindex="0"></div>
+    <section class="center">
+      <div class="bar">
+        <nav id="crumbs" aria-label="集合路径"></nav>
+        <div class="controls"><button id="undo" title="撤销">↶</button><button id="redo" title="重做">↷</button><button id="delete-selection" class="danger" disabled>删除</button><div id="add-control"><button id="add-toggle" aria-expanded="false" aria-controls="add-menu">添加</button><div id="add-menu" hidden><button id="new-start">开始</button><button id="new-over">结束</button><button id="new-group">集合</button><button id="new-page">页</button></div></div></div>
+      </div>
+      <div id="board" tabindex="0" aria-label="PDF 编排画布">
+        <div id="scene"><svg id="wires" aria-hidden="true"></svg><div id="nodes"></div></div>
+        <div id="hint" class="canvas-hint"></div>
+        <div id="selection-box" hidden></div>
+        <div id="canvas-menu" hidden><button data-add="start">开始</button><button data-add="over">结束</button><button data-add="group">集合</button><button data-add="page">页</button></div>
+      </div>
+      <div class="bar bottom">
+        <small id="mode"></small>
+        <div class="controls"><button id="pan" aria-pressed="false">平移</button><button id="edit" aria-pressed="true">编辑</button><button id="zoom-out" aria-label="缩小">−</button><button id="reset-view">100%</button><button id="zoom-in" aria-label="放大">＋</button></div>
+      </div>
+    </section>
+    <div class="panel-divider" id="right-divider" role="separator" aria-label="调整详情栏宽度" aria-orientation="vertical" tabindex="0"></div>
+    <aside id="inspector" aria-label="属性"></aside>
+  </main>
+  <div id="notice" role="status" hidden></div>
+  <dialog id="name-dialog" aria-labelledby="name-title">
+    <form id="name-form">
+      <div class="dialog-head"><h2 id="name-title">新建集合</h2></div>
+      <label class="name-field"><span id="name-label">名称</span><input id="group-name" required maxlength="120" autofocus></label>
+      <div class="dialog-foot"><button type="button" id="cancel-name">取消</button><button id="submit-name" class="primary">创建</button></div>
+    </form>
+  </dialog>
+  <dialog id="image-settings-dialog" aria-labelledby="image-settings-title">
+    <form method="dialog">
+      <h2 id="image-settings-title">图片转页设置</h2>
+      <label class="name-field">新图片的纸张 <select id="image-paper"><option value="a4">A4</option><option value="a3">A3</option><option value="letter">Letter</option><option value="original">图片原比例</option></select></label>
+      <label class="name-field">背景 <input type="color" id="image-background" value="#ffffff"></label>
+      <p>设置应用于之后导入的图片。</p>
+      <div class="dialog-foot"><button class="primary">完成</button></div>
+    </form>
+  </dialog>
+  <dialog id="language-dialog" aria-labelledby="language-title">
+    <form id="language-form">
+      <h2 id="language-title">界面语言</h2>
+      <label class="name-field">语言 <select id="interface-language"><option value="zh">简体中文</option><option value="en">English</option></select></label>
+      <div class="dialog-foot"><button type="button" id="cancel-language">取消</button><button class="primary">应用</button></div>
+    </form>
+  </dialog>
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <form id="settings-form">
+      <h2 id="settings-title">自动保存设置</h2>
+      <label class="name-field"><span><input id="auto-enabled" type="checkbox"> 启用自动保存</span></label>
+      <label class="name-field">保存间隔（分钟）<input id="auto-minutes" type="number" min="1" max="1440" step="1" required></label>
+      <div class="dialog-foot"><button type="button" id="cancel-settings">取消</button><button class="primary">保存设置</button></div>
+    </form>
+  </dialog>
+  <dialog id="export-dialog">
+    <div class="dialog-head"><h2>核对合并顺序</h2><button id="close-export" aria-label="关闭">×</button></div>
+    <p id="export-count"></p>
+    <div class="export-tools" role="tablist" aria-label="导出设置">
+      <button id="resize-export" role="tab" aria-controls="export-size" aria-selected="false">统一页宽</button>
+      <button id="limit-export" role="tab" aria-controls="export-limit" aria-selected="false">文件大小上限</button>
+      <button id="number-export" role="tab" aria-controls="number-settings" aria-selected="false">添加页码</button>
+      <button id="watermark-export" role="tab" aria-controls="watermark-settings" aria-selected="false">添加水印</button>
+    </div>
+    <section id="export-size" hidden aria-label="统一页宽设置">
+      <strong>本次导出包含的原始页宽</strong>
+      <ul id="original-widths"></ul>
+      <label for="target-width">目标页宽（mm）</label>
+      <input id="target-width" type="number" step="any" inputmode="decimal" placeholder="例如 210" aria-describedby="width-help">
+      <button id="reset-width" type="button">恢复原始尺寸</button>
+      <small id="width-help">所有页面都会等比缩放到目标宽度。</small>
+    </section>
+    <section id="export-limit" class="export-option" hidden>
+      <label>目标上限（MB） <input id="target-mb" type="number" min="0.01" step="any" placeholder="例如 20"></label>
+      <button id="reset-limit" type="button">取消大小上限</button>
+      <small>优先压缩图片并保留文字层。超出上限时仍可确认导出。</small>
+    </section>
+    <section class="export-option" id="number-settings" role="tabpanel" hidden>
+      <label>格式 <select id="page-number"><option value="">关闭</option><option value="plain">1</option><option value="fraction">1 / 20</option><option value="zh">第 1 页</option><option value="zh-fraction">第 1 / 20 页</option></select></label>
+      <label>起始页码 <input id="number-start" type="number" min="1" max="999999" value="1"></label>
+      <label><input id="skip-cover" type="checkbox"> 跳过封面</label>
+    </section>
+    <section class="export-option" id="watermark-settings" role="tabpanel" hidden>
+      <label>来源 <select id="watermark-kind"><option value="">关闭</option><option value="text">文字</option><option value="upload">上传图片</option><option value="material">从素材选择</option></select></label>
+      <label id="watermark-text-field" hidden>文字 <input id="watermark-text" maxlength="100" placeholder="输入水印文字"></label>
+      <label id="watermark-upload-field" hidden>图片 <input id="watermark-upload" type="file" accept=".png,.jpg,.jpeg"></label>
+      <div id="watermark-material-field" hidden>
+        <label>素材 <select id="watermark-source"></select></label>
+        <label id="watermark-page-field" hidden>PDF 页码 <input id="watermark-page" type="number" min="1" value="1"></label>
+        <label id="watermark-image-field" hidden>图片 <select id="watermark-image"></select></label>
+        <div id="watermark-samples"></div>
+        <small id="watermark-image-info"></small>
+      </div>
+      <div id="watermark-options" hidden>
+        <label>逆时针角度 <input id="watermark-angle" type="number" min="-180" max="180" value="30"></label>
+        <label>不透明度（%） <input id="watermark-opacity" type="number" min="1" max="100" value="15"></label>
+        <label>宽度（mm） <input id="watermark-size" type="number" min="5" max="500" value="45"></label>
+        <label>平铺间距（mm） <input id="watermark-gap" type="number" min="2" max="500" value="25"></label>
+      </div>
+    </section>
+    <div id="export-result" role="status"></div>
+    <ol id="page-plan"></ol>
+    <div class="dialog-foot"><button id="precompose">预合成</button><button id="download" class="primary">直接导出</button></div>
+  </dialog>
+  <script type="module" src="./board.js"></script>
+</body>
+</html>
